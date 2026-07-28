@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../api/client";
 import Layout from "../components/Layout";
+import Stamp from "../components/Stamp";
 
 interface FollowUp {
   id: string;
@@ -55,50 +56,73 @@ export default function CustomerDetail() {
   if (!customer) {
     return (
       <Layout>
-        <p>Loading...</p>
+        <p style={{ color: "var(--text-soft)" }}>Loading…</p>
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <Link to="/customers">&larr; Back to Customers</Link>
-      <h2>{customer.name}</h2>
+      <Link to="/customers" style={{ fontSize: 13, fontWeight: 600 }}>
+        ← Back to Customers
+      </Link>
 
-      <table cellPadding={6} style={{ marginBottom: 24 }}>
-        <tbody>
-          <tr><td><b>Mobile</b></td><td>{customer.mobile}</td></tr>
-          <tr><td><b>Email</b></td><td>{customer.email || "-"}</td></tr>
-          <tr><td><b>Business</b></td><td>{customer.businessName || "-"}</td></tr>
-          <tr><td><b>GST Number</b></td><td>{customer.gstNumber || "-"}</td></tr>
-          <tr><td><b>Type</b></td><td>{customer.customerType}</td></tr>
-          <tr><td><b>Status</b></td><td>{customer.status}</td></tr>
-          <tr><td><b>Address</b></td><td>{customer.address || "-"}</td></tr>
-        </tbody>
-      </table>
+      <div className="page-header" style={{ marginTop: 12 }}>
+        <div>
+          <div className="eyebrow">Customer Record</div>
+          <h1>{customer.name}</h1>
+        </div>
+        <Stamp status={customer.status} />
+      </div>
 
-      <h3>Follow-up Notes</h3>
-      <form onSubmit={handleAddNote} style={{ marginBottom: 16 }}>
+      <div className="panel">
+        <table style={{ width: "100%" }}>
+          <tbody>
+            {[
+              ["Mobile", customer.mobile, true],
+              ["Email", customer.email || "—", false],
+              ["Business", customer.businessName || "—", false],
+              ["GST Number", customer.gstNumber || "—", true],
+              ["Type", customer.customerType, false],
+              ["Address", customer.address || "—", false],
+            ].map(([label, value, isMono]) => (
+              <tr key={label as string}>
+                <td style={{ padding: "8px 16px 8px 0", width: 140 }} className="field-label">
+                  {label}
+                </td>
+                <td style={{ padding: "8px 0" }} className={isMono ? "mono" : ""}>
+                  {value}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style={{ marginTop: 32, marginBottom: 12 }}>Follow-up Notes</h3>
+      <form onSubmit={handleAddNote} className="panel">
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Add a follow-up note..."
+          placeholder="Add a follow-up note…"
           rows={3}
-          style={{ width: "100%", padding: 8, marginBottom: 8 }}
+          style={{ width: "100%", marginBottom: 10 }}
         />
         <button type="submit">Add Note</button>
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p className="error-text">{error}</p>}
       </form>
 
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {customer.followUps.length === 0 && <p style={{ color: "#666" }}>No follow-ups yet.</p>}
-        {customer.followUps.map((f) => (
-          <li key={f.id} style={{ borderBottom: "1px solid #eee", padding: "8px 0" }}>
-            <div>{f.note}</div>
-            <div style={{ fontSize: 12, color: "#888" }}>{new Date(f.createdAt).toLocaleString()}</div>
-          </li>
-        ))}
-      </ul>
+      {customer.followUps.length === 0 && (
+        <p style={{ color: "var(--text-soft)" }}>No follow-ups logged yet.</p>
+      )}
+      {customer.followUps.map((f) => (
+        <div key={f.id} style={{ borderBottom: "1px solid var(--line)", padding: "12px 0" }}>
+          <div>{f.note}</div>
+          <div className="mono" style={{ fontSize: 11, color: "var(--text-soft)", marginTop: 4 }}>
+            {new Date(f.createdAt).toLocaleString()}
+          </div>
+        </div>
+      ))}
     </Layout>
   );
 }

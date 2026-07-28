@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import Layout from "../components/Layout";
+import Stamp from "../components/Stamp";
 
 interface Customer {
   id: string;
@@ -51,57 +52,61 @@ export default function Customers() {
 
   return (
     <Layout>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-        <h2>Customers</h2>
-        <button onClick={() => setShowForm((s) => !s)}>{showForm ? "Cancel" : "+ Add Customer"}</button>
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">CRM Ledger</div>
+          <h1>Customers</h1>
+        </div>
+        <button className="accent" onClick={() => setShowForm((s) => !s)}>
+          {showForm ? "Cancel" : "+ New Customer"}
+        </button>
       </div>
 
       <input
-        placeholder="Search by name, mobile, or business..."
+        placeholder="Search by name, mobile, or business…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        style={{ width: "100%", padding: 8, marginBottom: 16 }}
+        style={{ width: "100%", marginBottom: 20 }}
       />
 
       {showForm && (
-        <form onSubmit={handleAdd} style={{ marginBottom: 20, padding: 16, border: "1px solid #ddd" }}>
-          <input
-            placeholder="Name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            required
-            style={{ marginRight: 8, padding: 6 }}
-          />
-          <input
-            placeholder="Mobile"
-            value={form.mobile}
-            onChange={(e) => setForm({ ...form, mobile: e.target.value })}
-            required
-            style={{ marginRight: 8, padding: 6 }}
-          />
-          <input
-            placeholder="Business Name"
-            value={form.businessName}
-            onChange={(e) => setForm({ ...form, businessName: e.target.value })}
-            style={{ marginRight: 8, padding: 6 }}
-          />
-          <select
-            value={form.customerType}
-            onChange={(e) => setForm({ ...form, customerType: e.target.value })}
-            style={{ marginRight: 8, padding: 6 }}
-          >
-            <option value="RETAIL">Retail</option>
-            <option value="WHOLESALE">Wholesale</option>
-            <option value="DISTRIBUTOR">Distributor</option>
-          </select>
-          <button type="submit">Save</button>
-          {error && <p style={{ color: "red" }}>{error}</p>}
+        <form onSubmit={handleAdd} className="panel">
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+            <div>
+              <label className="field-label">Name</label>
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+            </div>
+            <div>
+              <label className="field-label">Mobile</label>
+              <input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} required />
+            </div>
+            <div>
+              <label className="field-label">Business Name</label>
+              <input
+                value={form.businessName}
+                onChange={(e) => setForm({ ...form, businessName: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="field-label">Type</label>
+              <select
+                value={form.customerType}
+                onChange={(e) => setForm({ ...form, customerType: e.target.value })}
+              >
+                <option value="RETAIL">Retail</option>
+                <option value="WHOLESALE">Wholesale</option>
+                <option value="DISTRIBUTOR">Distributor</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit">Save Customer</button>
+          {error && <p className="error-text">{error}</p>}
         </form>
       )}
 
-      <table width="100%" cellPadding={8} style={{ borderCollapse: "collapse" }}>
+      <table className="ledger">
         <thead>
-          <tr style={{ textAlign: "left", borderBottom: "2px solid #ddd" }}>
+          <tr>
             <th>Name</th>
             <th>Mobile</th>
             <th>Business</th>
@@ -111,14 +116,25 @@ export default function Customers() {
         </thead>
         <tbody>
           {customers.map((c) => (
-            <tr key={c.id} style={{ borderBottom: "1px solid #eee" }}>
-              <td><Link to={`/customers/${c.id}`}>{c.name}</Link></td>
-              <td>{c.mobile}</td>
-              <td>{c.businessName || "-"}</td>
+            <tr key={c.id}>
+              <td>
+                <Link to={`/customers/${c.id}`}>{c.name}</Link>
+              </td>
+              <td className="mono">{c.mobile}</td>
+              <td>{c.businessName || "—"}</td>
               <td>{c.customerType}</td>
-              <td>{c.status}</td>
+              <td>
+                <Stamp status={c.status} />
+              </td>
             </tr>
           ))}
+          {customers.length === 0 && (
+            <tr>
+              <td colSpan={5} style={{ color: "var(--text-soft)", textAlign: "center", padding: 32 }}>
+                No customers yet. Add your first one above.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </Layout>

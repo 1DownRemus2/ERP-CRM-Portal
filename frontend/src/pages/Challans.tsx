@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api/client";
 import Layout from "../components/Layout";
+import Stamp from "../components/Stamp";
 
 interface Challan {
   id: string;
@@ -78,19 +79,24 @@ export default function Challans() {
 
   return (
     <Layout>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-        <h2>Sales Challans</h2>
-        <button onClick={() => setShowForm((s) => !s)}>{showForm ? "Cancel" : "+ New Challan"}</button>
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">Dispatch Register</div>
+          <h1>Sales Challans</h1>
+        </div>
+        <button className="accent" onClick={() => setShowForm((s) => !s)}>
+          {showForm ? "Cancel" : "+ New Challan"}
+        </button>
       </div>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="error-text" style={{ marginBottom: 12 }}>{error}</p>}
 
       {showForm && (
-        <form style={{ marginBottom: 20, padding: 16, border: "1px solid #ddd" }}>
-          <div style={{ marginBottom: 12 }}>
-            <label>Customer: </label>
+        <div className="panel">
+          <div style={{ marginBottom: 16 }}>
+            <label className="field-label">Customer</label>
             <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} required>
-              <option value="">Select customer</option>
+              <option value="">Select customer…</option>
               {customers.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -99,15 +105,16 @@ export default function Challans() {
             </select>
           </div>
 
+          <div className="eyebrow" style={{ marginBottom: 8 }}>Line Items</div>
           {lines.map((line, i) => (
-            <div key={i} style={{ marginBottom: 8 }}>
+            <div key={i} style={{ display: "flex", gap: 10, marginBottom: 8 }}>
               <select
                 value={line.productId}
                 onChange={(e) => updateLine(i, "productId", e.target.value)}
                 required
-                style={{ marginRight: 8 }}
+                style={{ flex: 1 }}
               >
-                <option value="">Select product</option>
+                <option value="">Select product…</option>
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name} (stock: {p.stock})
@@ -119,27 +126,34 @@ export default function Challans() {
                 min={1}
                 value={line.quantity}
                 onChange={(e) => updateLine(i, "quantity", e.target.value)}
-                style={{ width: 80 }}
+                style={{ width: 90 }}
               />
             </div>
           ))}
-          <button type="button" onClick={() => setLines([...lines, { productId: "", quantity: 1 }])}>
-            + Add product line
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => setLines([...lines, { productId: "", quantity: 1 }])}
+            style={{ marginBottom: 20 }}
+          >
+            + Add Line
           </button>
 
-          <div style={{ marginTop: 16 }}>
-            <button onClick={(e) => handleCreate(e, "DRAFT")} style={{ marginRight: 8 }}>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button className="secondary" onClick={(e) => handleCreate(e, "DRAFT")}>
               Save as Draft
             </button>
-            <button onClick={(e) => handleCreate(e, "CONFIRMED")}>Save & Confirm</button>
+            <button className="accent" onClick={(e) => handleCreate(e, "CONFIRMED")}>
+              Save &amp; Confirm
+            </button>
           </div>
-        </form>
+        </div>
       )}
 
-      <table width="100%" cellPadding={8} style={{ borderCollapse: "collapse" }}>
+      <table className="ledger">
         <thead>
-          <tr style={{ textAlign: "left", borderBottom: "2px solid #ddd" }}>
-            <th>Challan #</th>
+          <tr>
+            <th>Challan No.</th>
             <th>Customer</th>
             <th>Qty</th>
             <th>Status</th>
@@ -148,16 +162,29 @@ export default function Challans() {
         </thead>
         <tbody>
           {challans.map((c) => (
-            <tr key={c.id} style={{ borderBottom: "1px solid #eee" }}>
-              <td>{c.challanNumber}</td>
+            <tr key={c.id}>
+              <td className="mono">{c.challanNumber}</td>
               <td>{c.customer.name}</td>
-              <td>{c.totalQuantity}</td>
-              <td>{c.status}</td>
+              <td className="mono">{c.totalQuantity}</td>
               <td>
-                {c.status === "DRAFT" && <button onClick={() => handleConfirm(c.id)}>Confirm</button>}
+                <Stamp status={c.status} />
+              </td>
+              <td>
+                {c.status === "DRAFT" && (
+                  <button className="secondary" onClick={() => handleConfirm(c.id)}>
+                    Confirm
+                  </button>
+                )}
               </td>
             </tr>
           ))}
+          {challans.length === 0 && (
+            <tr>
+              <td colSpan={5} style={{ color: "var(--text-soft)", textAlign: "center", padding: 32 }}>
+                No challans yet. Create your first one above.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </Layout>

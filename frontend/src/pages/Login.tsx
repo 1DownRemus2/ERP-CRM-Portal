@@ -26,38 +26,45 @@ export default function Login() {
   }
 
   return (
-    <div style={{ maxWidth: 360, margin: "80px auto", fontFamily: "sans-serif" }}>
-      <h2>ERP + CRM Portal</h2>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 12 }}>
-          <label>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ display: "block", width: "100%", padding: 8 }}
-          />
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ display: "block", width: "100%", padding: 8 }}
-          />
-        </div>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        <button type="submit" disabled={loading} style={{ width: "100%", padding: 10 }}>
-          {loading ? "Logging in..." : "Log in"}
-        </button>
-      </form>
-      <p style={{ fontSize: 12, color: "#666", marginTop: 16 }}>
-        Test accounts (password: password123): admin@example.com, sales@example.com,
-        warehouse@example.com, accounts@example.com
-      </p>
+    <div className="auth-shell">
+      <div className="auth-card">
+        <div className="eyebrow">Dockmaster · Ops Portal</div>
+        <h1>Sign in</h1>
+        <p style={{ color: "var(--text-soft)", fontSize: 14, marginTop: 4, marginBottom: 24 }}>
+          Customers, inventory, and challans — one dock, one login.
+        </p>
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: 14 }}>
+            <label className="field-label">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div style={{ marginBottom: 18 }}>
+            <label className="field-label">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{ width: "100%" }}
+            />
+          </div>
+          {error && <p className="error-text">{error}</p>}
+          <button type="submit" className="accent" disabled={loading} style={{ width: "100%" }}>
+            {loading ? "Signing in…" : "Sign in"}
+          </button>
+        </form>
+        <p className="auth-hint">
+          TEST LOGINS (password: password123)<br />
+          admin@example.com · sales@example.com<br />
+          warehouse@example.com · accounts@example.com
+        </p>
+      </div>
     </div>
   );
 }
