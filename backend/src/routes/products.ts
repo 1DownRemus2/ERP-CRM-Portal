@@ -43,7 +43,7 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const product = await prisma.product.findUnique({ where: { id: req.params.id } });
+  const product = await prisma.product.findUnique({ where: { id: req.params.id as string } });
   if (!product) return res.status(404).json({ error: "Product not found" });
   res.json(product);
 });
@@ -70,7 +70,7 @@ router.patch("/:id", requireRole("ADMIN", "WAREHOUSE"), async (req, res) => {
   }
 
   try {
-    const product = await prisma.product.update({ where: { id: req.params.id }, data: parsed.data });
+    const product = await prisma.product.update({ where: { id: req.params.id as string }, data: parsed.data });
     res.json(product);
   } catch {
     res.status(404).json({ error: "Product not found" });
@@ -96,8 +96,8 @@ router.post("/:id/stock-movements", requireRole("ADMIN", "WAREHOUSE"), async (re
   try {
     // Wrap the stock update + movement log in a transaction so they never
     // get out of sync (e.g. if the process crashes between the two writes).
-    const result = await prisma.$transaction(async (tx: Tx) => {
-      const product = await tx.product.findUnique({ where: { id: req.params.id } });
+    const result = await prisma.$transaction(async (tx) => {
+      const product = await tx.product.findUnique({ where: { id: req.params.id as string } });
       if (!product) {
         throw { status: 404, message: "Product not found" };
       }
@@ -137,7 +137,7 @@ router.post("/:id/stock-movements", requireRole("ADMIN", "WAREHOUSE"), async (re
 // GET /products/:id/stock-movements — movement history for a product
 router.get("/:id/stock-movements", async (req, res) => {
   const movements = await prisma.stockMovement.findMany({
-    where: { productId: req.params.id },
+    where: { productId: req.params.id as string },
     orderBy: { createdAt: "desc" },
     include: { createdBy: { select: { name: true } } },
   });

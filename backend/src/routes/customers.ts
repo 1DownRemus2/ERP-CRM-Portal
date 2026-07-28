@@ -60,7 +60,7 @@ router.get("/", async (req, res) => {
 // GET /customers/:id  (detail page incl. follow-ups)
 router.get("/:id", async (req, res) => {
   const customer = await prisma.customer.findUnique({
-    where: { id: req.params.id },
+    where: { id: req.params.id as string },
     include: { followUps: { orderBy: { createdAt: "desc" } } },
   });
 
@@ -88,7 +88,7 @@ router.patch("/:id", async (req, res) => {
 
   try {
     const customer = await prisma.customer.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: parsed.data,
     });
     res.json(customer);
@@ -107,7 +107,7 @@ router.post("/:id/follow-ups", async (req, res) => {
   }
   if (!req.user) return res.status(401).json({ error: "Not authenticated" });
 
-  const customer = await prisma.customer.findUnique({ where: { id: req.params.id } });
+  const customer = await prisma.customer.findUnique({ where: { id: req.params.id as string } });
   if (!customer) return res.status(404).json({ error: "Customer not found" });
 
   const followUp = await prisma.followUp.create({

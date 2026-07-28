@@ -40,7 +40,7 @@ router.post("/", requireRole("ADMIN", "SALES"), async (req, res) => {
   const { customerId, items, status } = parsed.data;
 
   try {
-    const result = await prisma.$transaction(async (tx: Tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const customer = await tx.customer.findUnique({ where: { id: customerId } });
       if (!customer) throw { status: 404, message: "Customer not found" };
 
@@ -49,7 +49,7 @@ router.post("/", requireRole("ADMIN", "SALES"), async (req, res) => {
         where: { id: { in: items.map((i) => i.productId) } },
       });
 
-      const productMap = new Map(products.map((p: { id: string }) => [p.id, p]));
+      const productMap = new Map(products.map((p) => [p.id, p]));
       for (const item of items) {
         if (!productMap.has(item.productId)) {
           throw { status: 404, message: `Product ${item.productId} not found` };
@@ -130,9 +130,9 @@ router.patch("/:id/confirm", requireRole("ADMIN", "SALES"), async (req, res) => 
   if (!req.user) return res.status(401).json({ error: "Not authenticated" });
 
   try {
-    const result = await prisma.$transaction(async (tx: Tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const challan = await tx.challan.findUnique({
-        where: { id: req.params.id },
+        where: { id: req.params.id as string },
         include: { items: true },
       });
       if (!challan) throw { status: 404, message: "Challan not found" };
@@ -187,9 +187,9 @@ router.patch("/:id/cancel", requireRole("ADMIN", "SALES"), async (req, res) => {
   if (!req.user) return res.status(401).json({ error: "Not authenticated" });
 
   try {
-    const result = await prisma.$transaction(async (tx: Tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const challan = await tx.challan.findUnique({
-        where: { id: req.params.id },
+        where: { id: req.params.id as string },
         include: { items: true },
       });
       if (!challan) throw { status: 404, message: "Challan not found" };
@@ -253,7 +253,7 @@ router.get("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   const challan = await prisma.challan.findUnique({
-    where: { id: req.params.id },
+    where: { id: req.params.id as string },
     include: { customer: true, items: true, createdBy: { select: { name: true } } },
   });
   if (!challan) return res.status(404).json({ error: "Challan not found" });
