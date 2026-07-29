@@ -121,4 +121,26 @@ router.post("/:id/follow-ups", async (req, res) => {
   res.status(201).json(followUp);
 });
 
+// DELETE /customers/:id — Admin only. Refuses to delete a customer that has
+// existing challans (so historical sales records never lose their customer
+// reference); follow-up notes are removed first since they're safe to discard.
+router.delete("/:id", requireRole("ADMIN"), async (req, res) => {
+  const customerId = req.params.id as string;
+
+  const customer = await prisma.customer.findUnique({ where: { id: customerId } });
+  if (!customer) return res.status(404).json({ error: "Customer not found" });
+
+  const challanCount = await prisma.challan.count({ where: { customerId } });
+  if (challanCount > 0) {
+    return res.status(400).json({
+      error: `Cannot delete this customer — they have ${challanCount} challan(s) on record. Historical sales data must be preserved.`,
+    });
+  }
+
+  await prisma.followUp.deleteMany({ where: { customerId } });
+  await prisma.customer.delete({ where: { id: customerId } });
+
+  res.status(204).send();
+});
+
 export default router;
