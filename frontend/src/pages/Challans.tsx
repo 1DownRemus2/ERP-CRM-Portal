@@ -124,8 +124,12 @@ export default function Challans() {
               <input
                 type="number"
                 min={1}
+                step={1}
                 value={line.quantity}
-                onChange={(e) => updateLine(i, "quantity", e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e" || e.key === "+") e.preventDefault();
+                }}
+                onChange={(e) => updateLine(i, "quantity", e.target.value.replace(/[^0-9]/g, ""))}
                 style={{ width: 90 }}
               />
             </div>

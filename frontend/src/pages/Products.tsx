@@ -89,8 +89,19 @@ export default function Products() {
     }
   }
 
-  async function handleMovementSubmit(productId: string) {
+  async function handleMovementSubmit(productId: string, currentStock: number) {
     setRowError("");
+    const qty = Number(movement.quantity);
+
+    if (!Number.isInteger(qty) || qty <= 0) {
+      setRowError("Quantity must be a whole number greater than 0.");
+      return;
+    }
+    if (movement.movementType === "OUT" && qty > currentStock) {
+      setRowError(`Cannot remove ${qty} units — only ${currentStock} in stock.`);
+      return;
+    }
+
     try {
       await api.post(`/products/${productId}/stock-movements`, movement);
       setMovement({ quantity: "1", movementType: "IN", reason: "" });
@@ -138,6 +149,7 @@ export default function Products() {
               <label className="field-label">Unit Price (₹)</label>
               <input
                 type="number"
+                min={0}
                 value={form.unitPrice}
                 onChange={(e) => setForm({ ...form, unitPrice: e.target.value })}
                 required
@@ -148,6 +160,7 @@ export default function Products() {
               <label className="field-label">Opening Stock</label>
               <input
                 type="number"
+                min={0}
                 value={form.stock}
                 onChange={(e) => setForm({ ...form, stock: e.target.value })}
                 style={{ width: 110 }}
@@ -157,6 +170,7 @@ export default function Products() {
               <label className="field-label">Min Stock Alert</label>
               <input
                 type="number"
+                min={0}
                 value={form.minStock}
                 onChange={(e) => setForm({ ...form, minStock: e.target.value })}
                 style={{ width: 110 }}
@@ -265,8 +279,18 @@ export default function Products() {
                             <input
                               type="number"
                               min={1}
+                              step={1}
                               value={movement.quantity}
-                              onChange={(e) => setMovement({ ...movement, quantity: e.target.value })}
+                              onKeyDown={(e) => {
+                                if (e.key === "-" || e.key === "e" || e.key === "+") e.preventDefault();
+                              }}
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                // Strip anything that isn't a digit, so a pasted or
+                                // typed negative/decimal value can never sneak through.
+                                const cleaned = raw.replace(/[^0-9]/g, "");
+                                setMovement({ ...movement, quantity: cleaned });
+                              }}
                               style={{ width: 90 }}
                             />
                           </div>
@@ -279,7 +303,7 @@ export default function Products() {
                               style={{ width: 240 }}
                             />
                           </div>
-                          <button className="accent" onClick={() => handleMovementSubmit(p.id)}>
+                          <button className="accent" onClick={() => handleMovementSubmit(p.id, p.stock)}>
                             Record Movement
                           </button>
                         </div>
