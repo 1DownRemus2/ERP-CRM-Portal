@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { api } from "../api/client";
 import Layout from "../components/Layout";
 import Stamp from "../components/Stamp";
+import { useAuth } from "../context/AuthContext";
 
 interface Challan {
   id: string;
@@ -24,6 +25,8 @@ interface Product {
 }
 
 export default function Challans() {
+  const { user } = useAuth();
+  const canManageChallans = user?.role === "ADMIN" || user?.role === "SALES";
   const [challans, setChallans] = useState<Challan[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -77,6 +80,19 @@ export default function Challans() {
     }
   }
 
+  async function handleCancel(id: string) {
+    setError("");
+    if (!window.confirm("Cancel this challan? If it was confirmed, its stock will be restored.")) {
+      return;
+    }
+    try {
+      await api.patch(`/challans/${id}/cancel`);
+      load();
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to cancel challan");
+    }
+  }
+
   return (
     <Layout>
       <div className="page-header">
@@ -84,9 +100,11 @@ export default function Challans() {
           <div className="eyebrow">Dispatch Register</div>
           <h1>Sales Challans</h1>
         </div>
-        <button className="accent" onClick={() => setShowForm((s) => !s)}>
-          {showForm ? "Cancel" : "+ New Challan"}
-        </button>
+        {canManageChallans && (
+          <button className="accent" onClick={() => setShowForm((s) => !s)}>
+            {showForm ? "Cancel" : "+ New Challan"}
+          </button>
+        )}
       </div>
 
       {error && <p className="error-text" style={{ marginBottom: 12 }}>{error}</p>}
@@ -173,10 +191,15 @@ export default function Challans() {
               <td>
                 <Stamp status={c.status} />
               </td>
-              <td>
-                {c.status === "DRAFT" && (
+              <td style={{ display: "flex", gap: 8 }}>
+                {canManageChallans && c.status === "DRAFT" && (
                   <button className="secondary" onClick={() => handleConfirm(c.id)}>
                     Confirm
+                  </button>
+                )}
+                {canManageChallans && c.status !== "CANCELLED" && (
+                  <button className="secondary" onClick={() => handleCancel(c.id)}>
+                    Cancel
                   </button>
                 )}
               </td>
