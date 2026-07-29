@@ -7,19 +7,29 @@ interface Product {
   id: string;
   name: string;
   sku: string;
+  category?: string;
   unitPrice: string;
   stock: number;
   minStock: number;
+  location?: string;
 }
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", sku: "", unitPrice: "", stock: "0", minStock: "0" });
+  const [form, setForm] = useState({
+    name: "",
+    sku: "",
+    category: "",
+    unitPrice: "",
+    stock: "0",
+    minStock: "0",
+    location: "",
+  });
   const [error, setError] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", unitPrice: "", minStock: "" });
+  const [editForm, setEditForm] = useState({ name: "", category: "", unitPrice: "", minStock: "", location: "" });
   const [movement, setMovement] = useState({ quantity: "1", movementType: "IN", reason: "" });
   const [rowError, setRowError] = useState("");
 
@@ -38,7 +48,7 @@ export default function Products() {
     setError("");
     try {
       await api.post("/products", form);
-      setForm({ name: "", sku: "", unitPrice: "", stock: "0", minStock: "0" });
+      setForm({ name: "", sku: "", category: "", unitPrice: "", stock: "0", minStock: "0", location: "" });
       setShowForm(false);
       load();
     } catch (err: any) {
@@ -52,7 +62,13 @@ export default function Products() {
       return;
     }
     setExpandedId(p.id);
-    setEditForm({ name: p.name, unitPrice: p.unitPrice, minStock: String(p.minStock) });
+    setEditForm({
+      name: p.name,
+      category: p.category || "",
+      unitPrice: p.unitPrice,
+      minStock: String(p.minStock),
+      location: p.location || "",
+    });
     setMovement({ quantity: "1", movementType: "IN", reason: "" });
     setRowError("");
   }
@@ -62,8 +78,10 @@ export default function Products() {
     try {
       await api.patch(`/products/${productId}`, {
         name: editForm.name,
+        category: editForm.category,
         unitPrice: editForm.unitPrice,
         minStock: editForm.minStock,
+        location: editForm.location,
       });
       load();
     } catch (err: any) {
@@ -113,6 +131,10 @@ export default function Products() {
               <input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} required className="mono" />
             </div>
             <div>
+              <label className="field-label">Category</label>
+              <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+            </div>
+            <div>
               <label className="field-label">Unit Price (₹)</label>
               <input
                 type="number"
@@ -140,6 +162,10 @@ export default function Products() {
                 style={{ width: 110 }}
               />
             </div>
+            <div>
+              <label className="field-label">Location / Warehouse</label>
+              <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+            </div>
           </div>
           <button type="submit">Save Product</button>
           {error && <p className="error-text">{error}</p>}
@@ -151,9 +177,11 @@ export default function Products() {
           <tr>
             <th>Name</th>
             <th>SKU</th>
+            <th>Category</th>
             <th>Price</th>
             <th>Stock</th>
             <th>Min</th>
+            <th>Location</th>
             <th></th>
           </tr>
         </thead>
@@ -163,9 +191,11 @@ export default function Products() {
               <tr key={p.id} className={p.stock <= p.minStock ? "low-stock" : ""}>
                 <td>{p.name}</td>
                 <td className="mono">{p.sku}</td>
+                <td>{p.category || "—"}</td>
                 <td className="mono">₹{p.unitPrice}</td>
                 <td className="mono">{p.stock}</td>
                 <td className="mono">{p.minStock}</td>
+                <td>{p.location || "—"}</td>
                 <td>
                   <button className="secondary" onClick={() => openRow(p)}>
                     {expandedId === p.id ? "Close" : "Edit / Adjust"}
@@ -174,7 +204,7 @@ export default function Products() {
               </tr>
               {expandedId === p.id && (
                 <tr>
-                  <td colSpan={6} style={{ padding: 0 }}>
+                  <td colSpan={8} style={{ padding: 0 }}>
                     <div style={{ background: "var(--paper)", padding: 20, borderBottom: "1px solid var(--line)" }}>
                       {rowError && <p className="error-text">{rowError}</p>}
 
@@ -184,6 +214,10 @@ export default function Products() {
                           <div>
                             <label className="field-label">Name</label>
                             <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+                          </div>
+                          <div>
+                            <label className="field-label">Category</label>
+                            <input value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} />
                           </div>
                           <div>
                             <label className="field-label">Unit Price</label>
@@ -202,6 +236,10 @@ export default function Products() {
                               onChange={(e) => setEditForm({ ...editForm, minStock: e.target.value })}
                               style={{ width: 110 }}
                             />
+                          </div>
+                          <div>
+                            <label className="field-label">Location</label>
+                            <input value={editForm.location} onChange={(e) => setEditForm({ ...editForm, location: e.target.value })} />
                           </div>
                           <button className="secondary" onClick={() => handleEditSave(p.id)}>
                             Save Changes
@@ -254,7 +292,7 @@ export default function Products() {
           ))}
           {products.length === 0 && (
             <tr>
-              <td colSpan={6} style={{ color: "var(--text-soft)", textAlign: "center", padding: 32 }}>
+              <td colSpan={8} style={{ color: "var(--text-soft)", textAlign: "center", padding: 32 }}>
                 No products yet. Add your first one above.
               </td>
             </tr>
