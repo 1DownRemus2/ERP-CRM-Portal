@@ -14,6 +14,15 @@ interface Product {
   location?: string;
 }
 
+interface StockMovement {
+  id: string;
+  quantity: number;
+  movementType: "IN" | "OUT";
+  reason?: string;
+  createdAt: string;
+  createdBy: { name: string };
+}
+
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
@@ -29,6 +38,7 @@ export default function Products() {
   });
   const [error, setError] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [history, setHistory] = useState<StockMovement[]>([]);
   const [editForm, setEditForm] = useState({ name: "", category: "", unitPrice: "", minStock: "", location: "" });
   const [movement, setMovement] = useState({ quantity: "1", movementType: "IN", reason: "" });
   const [rowError, setRowError] = useState("");
@@ -56,7 +66,7 @@ export default function Products() {
     }
   }
 
-  function openRow(p: Product) {
+  async function openRow(p: Product) {
     if (expandedId === p.id) {
       setExpandedId(null);
       return;
@@ -71,6 +81,13 @@ export default function Products() {
     });
     setMovement({ quantity: "1", movementType: "IN", reason: "" });
     setRowError("");
+    setHistory([]);
+    try {
+      const res = await api.get(`/products/${p.id}/stock-movements`);
+      setHistory(res.data);
+    } catch {
+      // non-critical — the edit/adjust forms still work even if history fails to load
+    }
   }
 
   async function handleEditSave(productId: string) {
@@ -106,6 +123,8 @@ export default function Products() {
       await api.post(`/products/${productId}/stock-movements`, movement);
       setMovement({ quantity: "1", movementType: "IN", reason: "" });
       load();
+      const res = await api.get(`/products/${productId}/stock-movements`);
+      setHistory(res.data);
     } catch (err: any) {
       setRowError(err.response?.data?.error || "Failed to record stock movement");
     }
@@ -307,6 +326,48 @@ export default function Products() {
                             Record Movement
                           </button>
                         </div>
+                      </div>
+
+                      <div style={{ marginTop: 20 }}>
+                        <div className="eyebrow" style={{ marginBottom: 10 }}>Movement History</div>
+                        {history.length === 0 && (
+                          <p style={{ color: "var(--text-faint)", fontSize: 13 }}>No stock movements recorded yet.</p>
+                        )}
+                        {history.length > 0 && (
+                          <table style={{ width: "100%", fontSize: 13 }}>
+                            <thead>
+                              <tr style={{ textAlign: "left", color: "var(--text-faint)" }}>
+                                <th style={{ padding: "4px 8px 4px 0" }}>Date</th>
+                                <th style={{ padding: "4px 8px" }}>Type</th>
+                                <th style={{ padding: "4px 8px" }}>Qty</th>
+                                <th style={{ padding: "4px 8px" }}>Reason</th>
+                                <th style={{ padding: "4px 8px" }}>By</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {history.map((m) => (
+                                <tr key={m.id} style={{ borderTop: "1px solid var(--border-soft)" }}>
+                                  <td className="mono" style={{ padding: "6px 8px 6px 0" }}>
+                                    {new Date(m.createdAt).toLocaleString()}
+                                  </td>
+                                  <td style={{ padding: "6px 8px" }}>
+                                    <span
+                                      style={{
+                                        color: m.movementType === "IN" ? "var(--green)" : "var(--red)",
+                                        fontWeight: 600,
+                                      }}
+                                    >
+                                      {m.movementType}
+                                    </span>
+                                  </td>
+                                  <td className="mono" style={{ padding: "6px 8px" }}>{m.quantity}</td>
+                                  <td style={{ padding: "6px 8px" }}>{m.reason || "—"}</td>
+                                  <td style={{ padding: "6px 8px" }}>{m.createdBy?.name || "—"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
                       </div>
                     </div>
                   </td>
